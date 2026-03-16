@@ -1,0 +1,31 @@
+# Environment and secrets
+.env
+.env.local
+*.env
+
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.so
+.eggs/
+*.egg-info/
+*.egg
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data and DB (keep repo small; regenerate on deploy)
+Phase3_Storage/reviews_data.db
+Phase1_Ingestion/data/
+Phase2_Cleaning/data/
+Phase5_Summarization/latest_weekly_report.md
