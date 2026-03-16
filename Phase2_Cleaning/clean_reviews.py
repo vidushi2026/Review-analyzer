@@ -3,24 +3,40 @@ import json
 import re
 import emoji
 from langdetect import detect, DetectorFactory
-from presidio_analyzer import AnalyzerEngine
-from presidio_anonymizer import AnonymizerEngine
 
 # Ensure consistent language detection
 DetectorFactory.seed = 0
+
 
 def contains_emoji(text):
     """Check if the text contains any emojis."""
     return emoji.emoji_count(text) > 0
 
+
+def basic_pii_scrub(text: str) -> str:
+    """
+    Lightweight PII scrubbing using regex only.
+    Removes common email addresses and phone-like patterns.
+    """
+    # Email addresses
+    text = re.sub(
+        r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",
+        "[EMAIL]",
+        text,
+    )
+    # Phone numbers (very simple heuristic: long digit sequences, with optional +, spaces, or dashes)
+    text = re.sub(
+        r"\+?\d[\d\s\-]{7,}\d",
+        "[PHONE]",
+        text,
+    )
+    return text
+
+
 def clean_reviews(input_path, output_path):
     with open(input_path, 'r', encoding='utf-8') as f:
         reviews = json.load(f)
 
-    # Setup Presidio for PII scrubbing
-    analyzer = AnalyzerEngine()
-    anonymizer = AnonymizerEngine()
-    
     # Track seen texts to remove duplicates
     seen_texts = set()
     cleaned_reviews = []
@@ -52,14 +68,8 @@ def clean_reviews(input_path, output_path):
             # If langdetect fails (e.g., text is all numbers or gibberish), we skip
             continue
             
-        # 5. PII Scrubbing
-        # We look for common PII: EMAIL_ADDRESS, PHONE_NUMBER, PERSON, etc.
-        # Analyzing the text
-        results = analyzer.analyze(text=text, entities=["EMAIL_ADDRESS", "PHONE_NUMBER", "PERSON"], language='en')
-        
-        # Anonymizing
-        anonymized_result = anonymizer.anonymize(text=text, analyzer_results=results)
-        scrubbed_text = anonymized_result.text
+        # 5. PII Scrubbing (regex-only, no external services)
+        scrubbed_text = basic_pii_scrub(text)
         
         # Final cleaned review
         r['review_text'] = scrubbed_text
