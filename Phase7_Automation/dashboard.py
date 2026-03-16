@@ -81,20 +81,23 @@ if report:
     st.subheader("Send report by email")
     recipient_email = st.text_input(
         "Recipient email",
-        value=DEFAULT_RECIPIENT,
+        value="",
         placeholder="e.g. you@company.com",
-        help="Enter the email address to send the weekly report to.",
+        help="Enter the email address to send the report to.",
     )
     if st.button("Send to Email"):
         if not recipient_email or "@" not in recipient_email:
             st.error("Please enter a valid recipient email address.")
         else:
+            to_send = recipient_email.strip()
+            sent = False
+            # Try API first (when API server is running)
             try:
                 import urllib.request
                 import json
                 req = urllib.request.Request(
                     f"{API_BASE}/send-email",
-                    data=json.dumps({"to_email": recipient_email.strip()}).encode("utf-8"),
+                    data=json.dumps({"to_email": to_send}).encode("utf-8"),
                     method="POST",
                     headers={"Content-Type": "application/json"},
                 )
@@ -102,10 +105,31 @@ if report:
                     data = json.loads(resp.read().decode())
                 if data.get("ok"):
                     st.success("Email sent successfully.")
+                    sent = True
                 else:
                     st.error(data.get("message", "Failed to send email."))
-            except Exception as e:
-                st.error(f"Could not send email: {e}. Is the API server running at {API_BASE}?")
+            except Exception as api_err:
+                # Fallback: send directly from dashboard when API is not running
+                try:
+                    import sys
+                    _script_dir = os.path.dirname(os.path.abspath(__file__))
+                    _base = os.path.abspath(os.path.join(_script_dir, ".."))
+                    if _base not in sys.path:
+                        sys.path.insert(0, _base)
+                    from Phase7_Automation.email_service import send_latest_report_email
+                    ok, msg = send_latest_report_email(to_email=to_send, db_path=DB_PATH)
+                    if ok:
+                        st.success(msg)
+                        sent = True
+                    else:
+                        st.error(msg)
+                except Exception as direct_err:
+                    st.error(
+                        f"Could not send email. "
+                        f"API at {API_BASE} is not running ({api_err}). "
+                        f"Direct send failed: {direct_err}. "
+                        "Ensure SENDER_EMAIL and SENDER_PASSWORD are set in .env."
+                    )
     st.info("Automation: daily 8 AM generates the report and sends it to the default recipient.")
 else:
     st.warning("No reports found in the database. Please run the data pipeline!")
