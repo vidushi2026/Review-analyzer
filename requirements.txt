@@ -6,13 +6,7 @@ python-dotenv>=1.2.0
 google-play-scraper>=1.2.0
 langdetect>=1.0.9
 emoji>=2.15.0
-presidio_analyzer==2.2.360
-presidio_anonymizer==2.2.360
-spacy>=3.8.0
 phonenumbers>=9.0.0
-
-# Spacy English model (required by presidio)
-https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 
 # LLM & clustering
 groq>=1.0.0
