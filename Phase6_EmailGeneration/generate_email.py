@@ -30,6 +30,12 @@ def draft_email_with_llm(markdown_summary):
     system_prompt = """You are a professional Product Operations Manager.
 Your job is to take the provided weekly product insight pulse markdown and draft a formal, concise, and clean email to the Product Team.
 The email should include a professional greeting, the summarized insights in a very readable format, and a polite sign-off.
+
+Very important formatting rules:
+- Convert any markdown headings or bullets into clean plain text sentences or numbered lists.
+- Do NOT include markdown markers like '*', '-', '#', '```', or '**' anywhere in the email body.
+- Headings such as **External Fund Tracking Issues** must appear as plain text like: External Fund Tracking Issues:
+
 The sign-off MUST always end with:
 
 Best regards,
